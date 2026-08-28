@@ -26,7 +26,7 @@ jobs:
         run: choco install innosetup -y
 
       - name: Clean build artifacts
-        run: rm -rf dist/
+        run: Remove-Item -Recurse -Force dist/* -ErrorAction SilentlyContinue
 
       - name: Install Neutralino CLI
         run: npm install -g @neutralinojs/neu
@@ -36,9 +36,6 @@ jobs:
 
       - name: Build App
         run: npx @neutralinojs/neu build --target=win_x64
-
-      - name: Clean build artifacts
-        run: rm -rf dist/
 
       - name: Compress Build Output to ZIP
         run: |
