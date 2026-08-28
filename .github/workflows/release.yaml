@@ -25,8 +25,11 @@ jobs:
       - name: Install Neutralino CLI
         run: npm install -g @neutralinojs/neu
 
-      - name: Build Neutralino App
-        run: neu build
+      - name: Download Neutralino Binaries & Client
+        run: npx @neutralinojs/neu update
+
+      - name: Build App
+        run: npx @neutralinojs/neu build
 
       - name: Compress Build Output to ZIP
         run: |
