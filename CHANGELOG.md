@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.12](https://github.com/tm4to/easydpi/compare/v1.0.10...v1.0.12) (2026-08-28)
+
+
+### Bug Fixes
+
+* release permissions ([567fc60](https://github.com/tm4to/easydpi/commit/567fc60d816e2ad4e6f201f56232a7b027a1f944))
+
 ### [1.0.10](https://github.com/tm4to/easydpi/compare/v1.0.8...v1.0.10) (2026-08-28)
 
 
