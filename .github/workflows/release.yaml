@@ -39,7 +39,7 @@ jobs:
 
       - name: Compress Build Output to ZIP
         run: |
-          Compress-Archive -Path "dist\EasyDPI\*" -DestinationPath "EasyDPI-win_x64.zip" -Force
+          Compress-Archive -Path "dist\EasyDPI\easydpi-win_x64.exe", "dist\EasyDPI\resources.neu" -DestinationPath "EasyDPI-win_x64.zip" -Force
 
       - name: Create Inno Setup Script
         run: |
