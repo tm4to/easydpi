@@ -1,0 +1,25 @@
+# Developer tools' files
+.lite_workspace.lua
+
+# Neutralinojs binaries and builds
+/bin
+/dist
+
+# Neutralinojs client (minified)
+neutralino.js
+
+# Neutralinojs related files
+.storage
+*.log
+
+# tomato
+node_modules/
+ai/
+
+# Temp / Script generated files
+delete
+stop
+
+# OS generated files (optional but recommended)
+.DS_Store
+Thumbs.db

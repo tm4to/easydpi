@@ -1,0 +1,75 @@
+name: Build and Upload Release Asset
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers whenever a tag starting with 'v' is pushed (e.g., v1.0.0)
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Neutralino CLI
+        run: npm install -g @neutralinojs/neu
+
+      - name: Build Neutralino App
+        run: neu build
+
+      # Option A: Package into a downloadable .zip archive containing the compiled executable
+      - name: Compress Build Output to ZIP
+        run: |
+          Compress-Archive -Path "dist\EasyDPI\*" -DestinationPath "EasyDPI-win_x64.zip" -Force
+
+      # Option B (Optional): Compile to an Inno Setup .exe installer
+      - name: Create Inno Setup Script
+        run: |
+          $issContent = @"
+          [Setup]
+          AppName=EasyDPI
+          AppVersion=1.0.0
+          DefaultDirName={autopf}\EasyDPI
+          DefaultGroupName=EasyDPI
+          UninstallDisplayIcon={app}\EasyDPI-win_x64.exe
+          Compression=lzma2
+          SolidCompression=yes
+          OutputDir=.
+          OutputBaseFilename=EasyDPI-Setup
+
+          [Files]
+          Source: "dist\EasyDPI\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+          [Icons]
+          Name: "{autoprograms}\EasyDPI"; Filename: "{app}\EasyDPI-win_x64.exe"
+          Name: "{autodesktop}\EasyDPI"; Filename: "{app}\EasyDPI-win_x64.exe"; Tasks: desktopicon
+
+          [Tasks]
+          Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
+          [Run]
+          Filename: "{app}\EasyDPI-win_x64.exe"; Description: "{cm:LaunchProgram,EasyDPI}"; Flags: nowait postinstall skipifsilent
+          "@
+          Set-Content -Path build_installer.iss -Value $issContent
+
+      - name: Compile Installer with Inno Setup
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build_installer.iss
+
+      # Upload files as GitHub Release Assets
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            EasyDPI-win_x64.zip
+            EasyDPI-Setup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<title>EasyDPI</title>
+	<style>
+		body {
+			font-family: system-ui, sans-serif;
+			background: #121212;
+			color: #fff;
+			text-align: center;
+			padding: 20px;
+		}
+
+		#main-btn {
+			width: 140px;
+			height: 140px;
+			border-radius: 50%;
+			font-size: 22px;
+			font-weight: bold;
+			border: none;
+			cursor: pointer;
+			transition: 0.3s;
+			margin: 20px auto;
+			color: white;
+			background: #ce3939;
+			display: block;
+		}
+
+		#main-btn.active {
+			background: #2e7d32;
+		}
+
+		.actions {
+			margin-bottom: 15px;
+		}
+
+		.secondary-btn {
+			background: #2b2b2b;
+			color: #ccc;
+			border: 1px solid #444;
+			border-radius: 4px;
+			padding: 6px 12px;
+			font-size: 11px;
+			cursor: pointer;
+			transition: 0.2s;
+		}
+
+		.secondary-btn:hover {
+			background: #3b3b3b;
+			color: #fff;
+		}
+
+		#debug-panel {
+			background: #1e1e1e;
+			border: 1px solid #333;
+			height: 180px;
+			text-align: left;
+			padding: 10px;
+			font-family: monospace;
+			font-size: 11px;
+			overflow-y: auto;
+			color: #a0a0a0;
+			border-radius: 6px;
+		}
+	</style>
+</head>
+
+<body>
+	<h2>EasyDPI</h2>
+	<button id="main-btn">OFF</button>
+
+	<div class="actions">
+		<button id="reconfig-btn" class="secondary-btn">Re-configure</button>
+		<button id="close-apps-btn" class="secondary-btn">Close Discord & GoodbyeDPI</button>
+		<button id="reinstall-btn" class="secondary-btn">Re-download & Re-configure</button>
+	</div>
+
+	<div id="debug-panel"></div>
+
+	<script src="js/neutralino.js"></script>
+	<script src="js/main.js"></script>
+</body>
+
+</html>
