@@ -1,15 +1,20 @@
-# neutralinojs-minimal
+# EasyDPI
 
-The default template for a Neutralinojs app. It's possible to use your favorite frontend framework by using [these steps](https://neutralino.js.org/docs/getting-started/using-frontend-libraries).
+A lightweight, user-friendly desktop application wrapper for [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI/) designed to bypass DPI (Deep Packet Inspection) blocks effortlessly.
 
-## Contributors
+## Features
+* Simple and clean desktop interface.
+* Bundled with core GoodbyeDPI capabilities.
+* Lightweight footprint using Neutralino.js.
 
-[![Contributors](https://contrib.rocks/image?repo=neutralinojs/neutralinojs-minimal)](https://github.com/neutralinojs/neutralinojs-minimal/graphs/contributors)
+## Download
+Grab the latest Windows executable (`.exe`) from the [Releases](../../releases) page.
 
-## License
+## Building from Source
 
-[MIT](LICENSE)
+If you want to build the project locally:
 
-## Icon credits
-
-- `trayIcon.png` - Made by [Freepik](https://www.freepik.com) and downloaded from [Flaticon](https://www.flaticon.com)
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/tm4to/easydpi.git](https://github.com/tm4to/easydpi.git)
+   cd easydpi
