@@ -1,6 +1,6 @@
 {
   "name": "easydpi",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "The default template for a Neutralinojs app. It's possible to use your favorite frontend framework by using [these steps](https://neutralino.js.org/docs/getting-started/using-frontend-libraries).",
   "license": "ISC",
   "author": "",
@@ -11,7 +11,7 @@
     "tag": "powershell -Command \"$ver = (Get-Content package.json | ConvertFrom-Json).version; git tag v$ver; git push origin v$ver\"",
     "release": "standard-version",
     "manual-release-1": "npm run release",
-    "manual-release-2": "npm run git push --follow-tags origin master"
+    "manual-release-2": "git push --follow-tags origin master"
   },
   "devDependencies": {
     "standard-version": "^9.5.0"
