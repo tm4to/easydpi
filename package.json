@@ -1,6 +1,6 @@
 {
   "name": "easydpi",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "The default template for a Neutralinojs app. It's possible to use your favorite frontend framework by using [these steps](https://neutralino.js.org/docs/getting-started/using-frontend-libraries).",
   "license": "ISC",
   "author": "",

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.17](https://github.com/tm4to/easydpi/compare/v1.0.16...v1.0.17) (2026-08-28)
+
+
+### Bug Fixes
+
+* release: only zip win64 exe ([b21c4ea](https://github.com/tm4to/easydpi/commit/b21c4ea5e2ec916e4cc3168917c3c24e143be020))
+
 ### [1.0.16](https://github.com/tm4to/easydpi/compare/v1.0.15...v1.0.16) (2026-08-28)
 
 
