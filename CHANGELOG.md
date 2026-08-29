@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.3](https://github.com/tm4to/easydpi/compare/v1.1.2...v1.1.3) (2026-08-29)
+
+
+### Bug Fixes
+
+* GUI job lock ([16c41db](https://github.com/tm4to/easydpi/commit/16c41db1cfc1ac30529058f59a0921b16316e4a7))
+
 ### [1.1.2](https://github.com/tm4to/easydpi/compare/v1.1.0...v1.1.2) (2026-08-29)
 
 
