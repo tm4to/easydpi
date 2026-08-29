@@ -1,4 +1,3 @@
-let dpiProcess = null;
 let isRunning = false;
 
 const debugLog = (msg) => {
@@ -36,10 +35,20 @@ const GDPI_LATEST_RELEASE_API = "https://api.github.com/repos/ValdikSS/GoodbyeDP
 const DISCORD_INSTALLER_URL = "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64";
 const DISCORD_DOWNLOAD_PAGE_URL = "https://discord.com/download";
 
+const MAX_LOG_LINES = 300;
+
 function log(msg) {
 	const panel = document.getElementById("debug-panel");
 	if (panel) {
 		panel.innerHTML += `> ${msg}<br/>`;
+
+		// Trim old lines so the panel's DOM/string doesn't grow unbounded
+		// over long-running sessions (repeated retries, re-configures, etc.)
+		const lines = panel.innerHTML.split("<br/>");
+		if (lines.length > MAX_LOG_LINES) {
+			panel.innerHTML = lines.slice(lines.length - MAX_LOG_LINES).join("<br/>");
+		}
+
 		panel.scrollTop = panel.scrollHeight;
 	}
 }
@@ -132,7 +141,6 @@ async function killDpiProcess() {
 	try {
 		await Neutralino.os.execCommand(`taskkill /F /IM goodbyedpi.exe`);
 	} catch { }
-	dpiProcess = null;
 }
 
 async function killDiscordProcess() {
@@ -361,6 +369,11 @@ if (reinstallBtn) {
 }
 
 Neutralino.init();
+
+// Defensive cleanup: if the app previously crashed or was force-closed, a
+// goodbyedpi.exe from that session could still be running. Clear it out so
+// we never end up with two competing instances.
+killDpiProcess().catch(() => { });
 
 // Register event listener for the window close (X) button
 Neutralino.events.on("windowClose", async () => {
