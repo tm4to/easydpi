@@ -15,6 +15,7 @@ neutralino.js
 # tomato
 node_modules/
 ai/
+temp/
 
 # Temp / Script generated files
 delete

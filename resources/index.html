@@ -52,6 +52,25 @@
 			color: #fff;
 		}
 
+		.version-row {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			margin-bottom: 15px;
+			font-size: 12px;
+			color: #ccc;
+		}
+
+		#gdpi-version-select {
+			background: #2b2b2b;
+			color: #fff;
+			border: 1px solid #444;
+			border-radius: 4px;
+			padding: 4px 8px;
+			font-size: 12px;
+		}
+
 		#debug-panel {
 			background: #1e1e1e;
 			border: 1px solid #333;
@@ -70,6 +89,14 @@
 <body>
 	<h2>EasyDPI</h2>
 	<button id="main-btn">OFF</button>
+
+	<div class="version-row">
+		<label for="gdpi-version-select">GoodbyeDPI version:</label>
+		<select id="gdpi-version-select">
+			<option value="0.2.3rc2">0.2.3rc2 (Recommended)</option>
+			<option value="latest">Latest</option>
+		</select>
+	</div>
 
 	<div class="actions">
 		<button id="reconfig-btn" class="secondary-btn">Re-configure</button>

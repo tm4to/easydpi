@@ -18,7 +18,23 @@ const CONFIGS = [
 	// "-1 -a"
 ];
 
-const ZIP_URL = "https://github.com/ValdikSS/GoodbyeDPI/releases/download/0.2.3rc2/goodbyedpi-0.2.3rc2.zip";
+// ---- GoodbyeDPI version switch -------------------------------------------------
+const GDPI_VERSIONS = {
+	"0.2.3rc2": {
+		label: "0.2.3rc2 (Recommended)",
+		zipUrl: "https://github.com/ValdikSS/GoodbyeDPI/releases/download/0.2.3rc2/goodbyedpi-0.2.3rc2.zip",
+	},
+	"latest": {
+		label: "Latest",
+		zipUrl: null, // resolved dynamically via GitHub API
+	},
+};
+const DEFAULT_GDPI_VERSION = "0.2.3rc2";
+const GDPI_LATEST_RELEASE_API = "https://api.github.com/repos/ValdikSS/GoodbyeDPI/releases/latest";
+
+// ---- Discord installer ----------------------------------------------------------
+const DISCORD_INSTALLER_URL = "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64";
+const DISCORD_DOWNLOAD_PAGE_URL = "https://discord.com/download";
 
 function log(msg) {
 	const panel = document.getElementById("debug-panel");
@@ -28,33 +44,88 @@ function log(msg) {
 	}
 }
 
-async function getPaths() {
-	const localAppData = await Neutralino.os.getEnv("LOCALAPPDATA");
-	const targetDir = `${localAppData}\\EasyDPI`;
-	const exePath = `${targetDir}\\goodbyedpi-0.2.3rc2\\x86_64\\goodbyedpi.exe`;
-	const zipPath = `${targetDir}\\goodbyedpi.zip`;
-	return { targetDir, exePath, zipPath };
+async function getSelectedGdpiVersion() {
+	try {
+		const stored = await Neutralino.storage.getData("gdpiVersion");
+		if (stored && GDPI_VERSIONS[stored]) {
+			return stored;
+		}
+	} catch { }
+	return DEFAULT_GDPI_VERSION;
 }
 
-async function ensureInstalled() {
-	const { targetDir, exePath, zipPath } = await getPaths();
+async function setSelectedGdpiVersion(versionKey) {
+	if (!GDPI_VERSIONS[versionKey]) return;
+	await Neutralino.storage.setData("gdpiVersion", versionKey);
+}
 
-	try {
-		await Neutralino.filesystem.getStats(exePath);
-		log("GoodbyeDPI binary found.");
-	} catch {
-		log("GoodbyeDPI not found. Downloading...");
-		await Neutralino.filesystem.createDirectory(targetDir).catch(() => { });
+async function resolveGdpiZipUrl(versionKey) {
+	const versionInfo = GDPI_VERSIONS[versionKey] || GDPI_VERSIONS[DEFAULT_GDPI_VERSION];
 
-		const downloadCmd = `powershell -Command "Invoke-WebRequest -Uri '${ZIP_URL}' -OutFile '${zipPath}'"`;
-		await Neutralino.os.execCommand(downloadCmd);
-
-		log("Extracting archive...");
-		const extractCmd = `powershell -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${targetDir}' -Force"`;
-		await Neutralino.os.execCommand(extractCmd);
-
-		log("Installation complete.");
+	if (versionInfo.zipUrl) {
+		return versionInfo.zipUrl;
 	}
+
+	// "latest" - ask GitHub API for the newest release's zip asset
+	log("Resolving latest GoodbyeDPI release...");
+	const cmd = `powershell -Command "$ProgressPreference='SilentlyContinue'; $r = Invoke-RestMethod -Uri '${GDPI_LATEST_RELEASE_API}' -Headers @{ 'User-Agent' = 'EasyDPI' }; ($r.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1).browser_download_url"`;
+	const res = await Neutralino.os.execCommand(cmd);
+	const url = (res.stdOut || "").trim();
+
+	if (!url) {
+		throw new Error("Could not resolve the latest GoodbyeDPI release URL.");
+	}
+
+	log(`Latest release resolved: ${url}`);
+	return url;
+}
+
+async function getPaths(versionKey) {
+	const localAppData = await Neutralino.os.getEnv("LOCALAPPDATA");
+	const rootDir = `${localAppData}\\EasyDPI`;
+	const targetDir = `${rootDir}\\gdpi_${versionKey}`;
+	const zipPath = `${rootDir}\\gdpi_${versionKey}.zip`;
+	return { rootDir, targetDir, zipPath };
+}
+
+// Locate goodbyedpi.exe inside targetDir regardless of the zip's internal folder layout
+// (this differs between the pinned build and whatever "latest" happens to ship).
+async function findGdpiExecutable(targetDir) {
+	const cmd = `powershell -Command "(Get-ChildItem -Path '${targetDir}' -Filter goodbyedpi.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName"`;
+	const res = await Neutralino.os.execCommand(cmd);
+	const path = (res.stdOut || "").trim();
+	return path || null;
+}
+
+async function ensureInstalled(versionKey) {
+	const { rootDir, targetDir, zipPath } = await getPaths(versionKey);
+
+	let exePath = await findGdpiExecutable(targetDir).catch(() => null);
+	if (exePath) {
+		log(`GoodbyeDPI binary found (${versionKey}).`);
+		return exePath;
+	}
+
+	log(`GoodbyeDPI (${versionKey}) not found. Downloading...`);
+	await Neutralino.filesystem.createDirectory(rootDir).catch(() => { });
+	await Neutralino.filesystem.createDirectory(targetDir).catch(() => { });
+
+	const zipUrl = await resolveGdpiZipUrl(versionKey);
+
+	const downloadCmd = `powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri '${zipUrl}' -OutFile '${zipPath}'"`;
+	await Neutralino.os.execCommand(downloadCmd);
+
+	log("Extracting archive...");
+	const extractCmd = `powershell -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${targetDir}' -Force"`;
+	await Neutralino.os.execCommand(extractCmd);
+
+	log("Installation complete.");
+
+	exePath = await findGdpiExecutable(targetDir);
+	if (!exePath) {
+		throw new Error(`Could not locate goodbyedpi.exe after extracting version "${versionKey}".`);
+	}
+	return exePath;
 }
 
 async function killDpiProcess() {
@@ -73,12 +144,12 @@ async function killDiscordProcess() {
 	}
 }
 
-async function deleteExistingInstallation() {
-	const { targetDir } = await getPaths();
-	log("Removing existing GoodbyeDPI installation...");
+async function deleteExistingInstallation(versionKey) {
+	const { targetDir } = await getPaths(versionKey);
+	log(`Removing existing GoodbyeDPI installation (${versionKey})...`);
 	try {
 		// Powershell force remove directory
-		const removeCmd = `powershell -Command "Remove-Item -Path '${targetDir}' -Recurse -Force"`;
+		const removeCmd = `powershell -Command "Remove-Item -Path '${targetDir}' -Recurse -Force -ErrorAction SilentlyContinue"`;
 		await Neutralino.os.execCommand(removeCmd);
 		log("Old installation deleted successfully.");
 	} catch (err) {
@@ -109,13 +180,49 @@ async function testDiscordConnection() {
 	}
 }
 
-async function startAutoConfig() {
-	const { exePath } = await getPaths();
-	await ensureInstalled();
+// Checks (best-effort) whether Discord is already installed for the current user,
+// and if not, downloads and launches the official installer.
+async function ensureDiscordInstalled() {
+	const localAppData = await Neutralino.os.getEnv("LOCALAPPDATA");
+	const discordDir = `${localAppData}\\Discord`;
 
+	try {
+		const checkCmd = `powershell -Command "(Get-ChildItem -Path '${discordDir}' -Filter Discord.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName"`;
+		const res = await Neutralino.os.execCommand(checkCmd);
+		const found = (res.stdOut || "").trim();
+		if (found) {
+			log("Discord installation found.");
+			return true;
+		}
+	} catch { }
+
+	log("Discord not found. Downloading installer...");
+	const { rootDir } = await getPaths(await getSelectedGdpiVersion());
+	await Neutralino.filesystem.createDirectory(rootDir).catch(() => { });
+	const installerPath = `${rootDir}\\DiscordSetup.exe`;
+
+	try {
+		const dlCmd = `powershell -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri '${DISCORD_INSTALLER_URL}' -OutFile '${installerPath}'"`;
+		await Neutralino.os.execCommand(dlCmd);
+
+		log("Discord installer downloaded. Launching setup...");
+		await Neutralino.os.execCommand(`cmd.exe /c start "" "${installerPath}"`);
+		return true;
+	} catch (err) {
+		log(`Discord installer download failed: ${err.message || err}. Opening download page instead...`);
+		await Neutralino.os.execCommand(`cmd.exe /c start "" "${DISCORD_DOWNLOAD_PAGE_URL}"`).catch(() => { });
+		return false;
+	}
+}
+
+async function startAutoConfig() {
+	const versionKey = await getSelectedGdpiVersion();
+	const exePath = await ensureInstalled(versionKey);
+
+	const configStorageKey = `workingConfig_${versionKey}`;
 	let savedConfig = null;
 	try {
-		savedConfig = await Neutralino.storage.getData("workingConfig");
+		savedConfig = await Neutralino.storage.getData(configStorageKey);
 	} catch { }
 
 	const testList = savedConfig ? [savedConfig, ...CONFIGS.filter(c => c !== savedConfig)] : CONFIGS;
@@ -135,7 +242,10 @@ async function startAutoConfig() {
 
 		if (success) {
 			log(`Success! Active config: ${flag}`);
-			await Neutralino.storage.setData("workingConfig", flag);
+			await Neutralino.storage.setData(configStorageKey, flag);
+
+			// A working DPI bypass is confirmed - make sure Discord itself is installed.
+			await ensureDiscordInstalled();
 
 			Neutralino.os.execCommand("start discord://").catch(() => { });
 			return true;
@@ -148,6 +258,20 @@ async function startAutoConfig() {
 	log("Error: No working configuration found.");
 	await killDpiProcess();
 	return false;
+}
+
+// GDPI version <select>
+const versionSelect = document.getElementById("gdpi-version-select");
+if (versionSelect) {
+	(async () => {
+		const current = await getSelectedGdpiVersion();
+		versionSelect.value = current;
+	})();
+
+	versionSelect.addEventListener("change", async () => {
+		await setSelectedGdpiVersion(versionSelect.value);
+		log(`GoodbyeDPI version set to: ${GDPI_VERSIONS[versionSelect.value].label}`);
+	});
 }
 
 // Toggle Main Button (ON / OFF)
@@ -202,6 +326,8 @@ if (reinstallBtn) {
 	reinstallBtn.addEventListener("click", async () => {
 		log("Starting clean re-installation flow...");
 
+		const versionKey = await getSelectedGdpiVersion();
+
 		// Stop process and reset UI state
 		await killDpiProcess();
 		isRunning = false;
@@ -214,9 +340,9 @@ if (reinstallBtn) {
 
 		// Clear stored settings & wipe directory
 		try {
-			await Neutralino.storage.setData("workingConfig", "");
+			await Neutralino.storage.setData(`workingConfig_${versionKey}`, "");
 		} catch { }
-		await deleteExistingInstallation();
+		await deleteExistingInstallation(versionKey);
 
 		// Force download + config search
 		const ok = await startAutoConfig();
