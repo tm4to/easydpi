@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/tm4to/easydpi/compare/v1.0.17...v1.1.0) (2026-08-29)
+
+
+### Features
+
+* ensureDiscordInstalled() and gdpi version switch ([d58f23e](https://github.com/tm4to/easydpi/commit/d58f23ef274caeffe60751f95104f32ae003258f))
+
 ### [1.0.17](https://github.com/tm4to/easydpi/compare/v1.0.16...v1.0.17) (2026-08-28)
 
 
