@@ -39,18 +39,21 @@ const MAX_LOG_LINES = 300;
 
 function log(msg) {
 	const panel = document.getElementById("debug-panel");
-	if (panel) {
-		panel.innerHTML += `> ${msg}<br/>`;
+	if (!panel) return;
 
-		// Trim old lines so the panel's DOM/string doesn't grow unbounded
-		// over long-running sessions (repeated retries, re-configures, etc.)
-		const lines = panel.innerHTML.split("<br/>");
-		if (lines.length > MAX_LOG_LINES) {
-			panel.innerHTML = lines.slice(lines.length - MAX_LOG_LINES).join("<br/>");
-		}
+	const line = document.createElement("div");
+	line.textContent = `> ${msg}`;
+	panel.appendChild(line);
 
-		panel.scrollTop = panel.scrollHeight;
+	// Keep the panel bounded so it doesn't grow forever over long sessions.
+	// (Manipulating innerHTML strings here is a trap: browsers normalize
+	// "<br/>" to "<br>" on read-back, so a string-split trim silently stops
+	// matching after the first append. Real DOM nodes avoid that entirely.)
+	while (panel.childNodes.length > MAX_LOG_LINES) {
+		panel.removeChild(panel.firstChild);
 	}
+
+	panel.scrollTop = panel.scrollHeight;
 }
 
 async function getSelectedGdpiVersion() {
